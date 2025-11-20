@@ -13,6 +13,7 @@ https://github.com/netology-code/devops-diplom-yandexcloud/blob/main/README.md
     - [Установка и настройка CI/CD](#установка-и-настройка-cicd)
   - [Что необходимо для сдачи задания?](#что-необходимо-для-сдачи-задания)
   - [Выполнение заданий](#выполнение-заданий)
+    - [Вспомогательные материалы](#вспомогательные-материалы)
     - [Описание окружения-отправной точки](#описание-окружения-отправной-точки)
     - [Этап "Создание облачной инфраструктуры"](#этап-создание-облачной-инфраструктуры)
     - [Этап "Создание Kubernetes кластера"](#этап-создание-kubernetes-кластера)
@@ -156,6 +157,36 @@ https://github.com/netology-code/devops-diplom-yandexcloud/blob/main/README.md
 ---
 
 ## Выполнение заданий
+
+### Вспомогательные материалы
+
+```
+1. https://github.com/Spardoks/cloud_security - сборник информации по terraform
+
+2. https://github.com/Spardoks/Kubernetes_helm - сборник инфоромации по kubernetes и helm
+
+3. https://github.com/Spardoks/Grafana_intro - сборник информации по Grafana
+
+4. https://github.com/Spardoks/DockerInPractice - сборник информации по Docker
+
+5. https://github.com/Spardoks/TestProject - сборник информации по CI/CD
+
+6. https://github.com/Spardoks/AnsibleIntro - сборник информации по Ansible
+
+7. https://docs.google.com/document/d/1p5CNruVQOfGB9kbO9cFVT_Jlv0B52VhiQZfJ5t3sysk/edit?tab=t.0 - GitLab
+
+8. https://docs.google.com/document/d/1xaONQrqilPapDeNjztUmJg9tu900ykL_a-zDOGs55qg/edit?tab=t.0 - Docker 1
+
+9. https://docs.google.com/document/d/16GZSjKXNLUs4bcO0OYDRXsL8j5v5aBn36pgq-4lJpQo/edit?tab=t.0 - Docker 2
+
+10. https://docs.google.com/document/d/1X-wHH0zMjrktgyUW3D81lwV-2BI_DcvhzubB0LCl-94/edit?tab=t.0 - Ansible 1
+
+11. https://docs.google.com/document/d/1X-wHH0zMjrktgyUW3D81lwV-2BI_DcvhzubB0LCl-94/edit?tab=t.0 - Ansible 2
+
+12. https://docs.google.com/document/d/1ZhaLsoOjBcaJpQVnENKq9ByhYdRFOUJdx6kqZZpyPbE/edit?tab=t.0 - Cloud
+
+13. https://docs.github.com/ru/actions/get-started/quickstart - Github Actions
+```
 
 ### Описание окружения-отправной точки
 
