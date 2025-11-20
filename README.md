@@ -159,6 +159,77 @@ https://github.com/netology-code/devops-diplom-yandexcloud/blob/main/README.md
 
 ### Описание окружения-отправной точки
 
+```
+tester@debian:~$ uname -a
+Linux debian 6.1.0-33-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.133-1 (2025-04-10) x86_64 GNU/Linux
+tester@debian:~$ lsb_release -a
+No LSB modules are available.
+Distributor ID: Debian
+Description:    Debian GNU/Linux 12 (bookworm)
+Release:        12
+Codename:       bookworm
+
+tester@debian:~$ terraform version
+Terraform v1.11.4
+on linux_amd64
+
+tester@debian:~$ docker version
+Client: Docker Engine - Community
+ Version:           28.0.4
+ API version:       1.48
+ Go version:        go1.23.7
+ Git commit:        b8034c0
+ Built:             Tue Mar 25 15:07:22 2025
+ OS/Arch:           linux/amd64
+ Context:           default
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          28.0.4
+  API version:      1.48 (minimum version 1.24)
+  Go version:       go1.23.7
+  Git commit:       6430e49
+  Built:            Tue Mar 25 15:07:22 2025
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          1.7.27
+  GitCommit:        05044ec0a9a75232cad458027ca83437aae3f4da
+ runc:
+  Version:          1.2.5
+  GitCommit:        v1.2.5-0-g59923ef
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+
+tester@debian:~$ git -v
+git version 2.39.5
+
+tester@debian:~$ yc -v
+Yandex Cloud CLI 0.146.1 linux/amd64
+
+tester@debian:~$ kubectl version
+Client Version: v1.34.0
+Kustomize Version: v5.7.1
+
+tester@debian:~$ helm version
+version.BuildInfo{Version:"v3.19.0", GitCommit:"3d8990f0836691f0229297773f3524598f46bda6", GitTreeState:"clean", GoVersion:"go1.24.7"}
+
+tester@debian:~$ python3 --version
+Python 3.11.2
+
+tester@debian:~$ ansible --version
+ansible [core 2.17.10]
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = ['/home/tester/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python3/dist-packages/ansible
+  ansible collection location = /home/tester/.ansible/collections:/usr/share/ansible/collections
+  executable location = /usr/bin/ansible
+  python version = 3.11.2 (main, Apr 28 2025, 14:11:48) [GCC 12.2.0] (/usr/bin/python3)
+  jinja version = 3.1.2
+  libyaml = True
+```
+
 ### Этап "Создание облачной инфраструктуры"
 
 ...
