@@ -263,7 +263,106 @@ ansible [core 2.17.10]
 
 ### Этап "Создание облачной инфраструктуры"
 
+1. Берём наше готовое окружение (или настраиваем его по материалам из ссылок выше)
+
+2. Убеждаемся, что у нас есть готовый сервисный аккаунт для работы с terraform c правами админа или создаём его
+```
+# https://yandex.cloud/ru/docs/tutorials/infrastructure-management/terraform-quickstart
+# sa-profile admin service ac for using terraform in folder
+```
+
+3. Создаём файл терраформа для работы с зеркалами и помещаем его в `~/.terraformrc`
+```
+provider_installation {
+  network_mirror {
+    url = "https://terraform-mirror.yandexcloud.net/"
+    include = ["registry.terraform.io/*/*"]
+  }
+  direct {
+    exclude = ["registry.terraform.io/*/*"]
+  }
+}
+```
+
+4. Создаём файл с описанием провайдеров `providers.tf`
+```
+terraform {
+  required_providers {
+    yandex = {
+      source = "yandex-cloud/yandex"
+    }
+  }
+  #required_version = "~>1.8.4"
+}
+provider "yandex" {
+  token     = var.token
+  cloud_id  = var.cloud_id
+  folder_id = var.folder_id
+  zone      = var.default_zone
+}
+```
+
+5. Создаём сервисный аккаунт с необходимыми правами для работы с облачной инфраструктурой
+```
+resource "yandex_iam_service_account" "service" {
+  folder_id = var.folder_id
+  name      = var.account_name
+}
+
+resource "yandex_resourcemanager_folder_iam_member" "service_editor" {
+  folder_id = var.folder_id
+  role      = "editor"
+  member    = "serviceAccount:${yandex_iam_service_account.service.id}"
+}
+```
+
+6. Подготовим backend для Terraform: S3 bucket в созданном ЯО аккаунте(создание бакета через TF)
+
 ...
+
+7. Создадим конфигурацию Terrafrom, используя созданный бакет ранее как бекенд для хранения стейт файла. Конфигурации Terraform для создания сервисного аккаунта и бакета и основной инфраструктуры следует сохранить в разных папках
+
+...
+
+8. Создадим VPC с подсетями в разных зонах доступности
+
+...
+
+9. Убедимся, что теперь мы можем выполнять команды terraform destroy и terraform apply без дополнительных ручных действий
+
+...
+
+Разворачиваем инфраструктуру [terraform_infrastructure](./terraform_infrastructure/)
+```
+yc config profile activate sa-profile
+export YC_TOKEN=$(yc iam create-token)
+export YC_CLOUD_ID=$(yc config get cloud-id)
+export YC_FOLDER_ID=$(yc config get folder-id)
+
+cp .terraformrc ~/.terraformrc
+cat > personal.auto.tfvars << EOF
+token        = "${YC_TOKEN}"
+cloud_id     = "${YC_CLOUD_ID}"
+folder_id    = "${YC_FOLDER_ID}"
+EOF
+terraform init
+terraform validate
+terraform plan
+terraform apply
+terraform destroy
+```
+
+Доп.: Сгенерим ключ для гита для удобства отправки данных
+```
+# https://docs.github.com/ru/authentication/connecting-to-github-with-ssh
+ssh-keygen -t ed25519 -f ./ed25519_github
+cat ./ed25519_github.pub
+eval "$(ssh-agent -s)"
+ssh-add ./ed25519_github
+ssh -T git@github.com
+git config user.name <Name>
+git config user.email <Email>
+```
 
 ### Этап "Создание Kubernetes кластера"
 
