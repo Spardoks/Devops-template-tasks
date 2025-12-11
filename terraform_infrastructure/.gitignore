@@ -1,0 +1,8 @@
+.terraform/*
+
+*.lock*
+*.tfstate
+*.tfstate.*
+
+# own secret vars store.
+personal.auto.tfvars
