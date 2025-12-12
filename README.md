@@ -432,7 +432,11 @@ git config user.email <Email>
 
 ### Этап "Создание Kubernetes кластера"
 
-...
+1. Cоздадим виртуальные машин для Kubernetes кластера. Будем использовать одну Master ноду и две Worker ноды
+
+[master](./terraform_infrastructure/master.tf)
+
+[worker](./terraform_infrastructure/worker.tf)
 
 ### Этап "Создание тестового приложения"
 
