@@ -5,4 +5,3 @@
 *.tfstate.*
 
 personal.auto.tfvars
-backend.tfvars

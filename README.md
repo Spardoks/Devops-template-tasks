@@ -318,21 +318,33 @@ resource "yandex_resourcemanager_folder_iam_member" "service_editor" {
 
 6. Подготовим backend для Terraform: S3 bucket в созданном ЯО аккаунте(создание бакета через TF)
 
-...
+```
+resource "yandex_iam_service_account_static_access_key" "terraform_service_account_key" {
+  service_account_id = yandex_iam_service_account.service.id
+}
 
-7. Создадим конфигурацию Terrafrom, используя созданный бакет ранее как бекенд для хранения стейт файла. Конфигурации Terraform для создания сервисного аккаунта и бакета и основной инфраструктуры следует сохранить в разных папках
+resource "yandex_storage_bucket" "tf-bucket" {
+  bucket     = "for-state"
+  access_key = yandex_iam_service_account_static_access_key.terraform_service_account_key.access_key
+  secret_key = yandex_iam_service_account_static_access_key.terraform_service_account_key.secret_key
 
-...
+  anonymous_access_flags {
+    read = false
+    list = false
+  }
 
-8. Создадим VPC с подсетями в разных зонах доступности
+  force_destroy = true
 
-...
+  provisioner "local-exec" {
+    command = "echo export AWS_ACCESS_KEY=${yandex_iam_service_account_static_access_key.terraform_service_account_key.access_key} > ../terraform_infrastructure/backend.tfvars"
+  }
 
-9. Убедимся, что теперь мы можем выполнять команды terraform destroy и terraform apply без дополнительных ручных действий
-
-...
-
-Разворачиваем инфраструктуру [terraform_infrastructure](./terraform_infrastructure/)
+  provisioner "local-exec" {
+    command = "echo export AWS_SECRET_KEY=${yandex_iam_service_account_static_access_key.terraform_service_account_key.secret_key} >> ../terraform_infrastructure/backend.tfvars"
+  }
+}
+```
+Разворачиваем бэкенд [terraform_backend](./terraform_backend/)
 ```
 yc config profile activate sa-profile
 export YC_TOKEN=$(yc iam create-token)
@@ -350,6 +362,60 @@ terraform validate
 terraform plan
 terraform apply
 terraform destroy
+```
+Проверяем, создался ли S3-bucket и сервисный аккаунт
+```
+yc iam service-account list
+yc storage bucket list
+```
+
+7. Создадим конфигурацию Terrafrom, используя созданный бакет ранее как бэкенд для хранения стейт файла. Конфигурации Terraform для создания сервисного аккаунта и бакета и основной инфраструктуры следует сохранить в разных папках (будем её хранить в [terraform_infrastructure](./terraform_infrastructure/))
+```
+terraform {
+  backend "s3" {
+    endpoints = {
+      s3 = "https://storage.yandexcloud.net"
+    }
+    bucket = "for-state"
+    region = "ru-central1"
+    key = "for-state/terraform.tfstate"
+    skip_region_validation = true
+    skip_credentials_validation = true
+    skip_requesting_account_id   = true
+  }
+}
+```
+
+8. Создадим VPC с подсетями в разных зонах доступности
+```
+resource "yandex_vpc_network" "network1" {
+  name = var.vpc_name
+}
+
+resource "yandex_vpc_subnet" "network1-subnet1" {
+  name           = var.subnet1
+  zone           = var.zone1
+  network_id     = yandex_vpc_network.network1.id
+  v4_cidr_blocks = var.cidr1
+}
+
+resource "yandex_vpc_subnet" "network1-subnet2" {
+  name           = var.subnet2
+  zone           = var.zone2
+  network_id     = yandex_vpc_network.network1.id
+  v4_cidr_blocks = var.cidr2
+}
+```
+
+9. Убедимся, что теперь мы можем выполнять команды terraform destroy и terraform apply без дополнительных ручных действий
+```
+cd terraform_infrastructure
+source backend.tfvars
+terraform init
+terraform apply
+terraform state list
+terraform destroy
+terraform state list
 ```
 
 Доп.: Сгенерим ключ для гита для удобства отправки данных
