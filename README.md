@@ -479,7 +479,28 @@ kubectl get nodes
 
 ### Этап "Создание тестового приложения"
 
-...
+Создаём тестовое приложение с Docker файлом
+https://github.com/Spardoks/Devops-template-tasks-site
+
+Собираем и отправляем его в dockerhub
+```
+docker login -u spardoks
+docker build -t spardoks/devops-template-tasks-site:0.1 .
+docker images
+docker push spardoks/devops-template-tasks-site:0.1
+```
+https://hub.docker.com/r/spardoks/devops-template-tasks-site
+
+![test_app_in_docker_hub](./screens/test_app_in_docker_hub.png)
+
+Потестить
+```
+docker run -d --name test_site_0_1 -p 127.0.0.1:80:80 spardoks/devops-template-tasks-site:0.1
+docker logs test_site_0_1
+docker -it test_site_0_1 bash
+curl 127.0.0.1:80
+```
+
 
 ### Этап "Подготовка cистемы мониторинга и деплой приложения"
 
