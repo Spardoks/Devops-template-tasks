@@ -504,6 +504,58 @@ curl 127.0.0.1:80
 
 ### Этап "Подготовка cистемы мониторинга и деплой приложения"
 
+Скопируем с удалённого master хоста на локальную машину конфиг kuber (с подменой ip), чтобы управлять кластером удобнее с локальной машины и активируем конфиг
+```
+export KUBECONFIG=~/education/devops_diplom/my_cluster_cuber_config
+kubectl get nodes
+```
+
+Добавляем репозиторий `prometheus-community` для его установки с помощью helm
+```
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+```
+
+Сохраняем значения по умолчанию Helm чарта prometheus-community в файл, чтобы отредактировать их
+```
+mkdir helm-prometheus
+helm show values prometheus-community/kube-prometheus-stack > helm-prometheus/values.yaml
+```
+Измеяем пароль по-умолчанию для входа в Grafana
+```
+nano helm-prometheus/values.yaml
+# find adminPassword, andcomment and change
+
+```
+
+Для доступа к Grafana снаружи кластера Kubernetes будем использовать тип сервиса NodePort
+Изменяем сервис и присвоим ему порт 31000
+```
+# supported 30000-32767
+# find "Passed to grafana subchart and used by servicemonitor below"
+# add to service
+type: NodePort
+nodePort: 31000
+```
+
+Используя Helm и подготовленный файл значений values.yaml, выполняем установку prometheus-community
+```
+helm upgrade --install monitoring prometheus-community/kube-prometheus-stack --create-namespace -n monitoring -f helm-prometheus/values.yaml
+```
+Проверяем результат
+```
+kubectl -n monitoring get pods -o wide
+kubectl -n monitoring get svc -o wide
+```
+Конфиг [helm-prometheus-config](./helm-prometheus/values.yaml)
+
+![helm_grafana_working](./screens/helm_grafana_working.png)
+
+![web_grafana_working](./screens/web_grafana_working.png)
+
+
+Деплой приложения
+
 ...
 
 ### Этап "Деплой инфраструктуры в terraform pipeline"
