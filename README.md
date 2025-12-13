@@ -438,6 +438,45 @@ git config user.email <Email>
 
 [worker](./terraform_infrastructure/worker.tf)
 
+Применяем. Проверить создание можно через
+```
+yc compute instance list
+```
+
+2. Готовим ансибл конфигурации для [Kubespray](https://kubernetes.io/docs/setup/production-environment/tools/kubespray/)
+
+[ansible.tf](./terraform_infrastructure/ansible.tf)
+
+[hosts.tftpl](./terraform_infrastructure/hosts.tftpl)
+
+Применяем конфигурацию и идём устанавливать kuber
+
+```
+cd ../../
+git clone https://github.com/kubernetes-sigs/kubespray.git
+
+# https://github.com/kubernetes-sigs/kubespray/commit/31cce09fbcabeec9253afcb6d59a539d8e43472c
+
+ansible-playbook -i inventory/mycluster/hosts.yaml -u ubuntu --become --become-user=root --private-key=~/.ssh/id_ed25519 -e 'ansible_ssh_common_args="-o StrictHostKeyChecking=no"' cluster.yml --flush-cache
+
+# Не забыть про либу sudo apt-get install -y python3-netaddr на хосте, с которого будет запускать ansible
+```
+![kuberspray_working](./screens/kuberspray_working.png)
+
+Создаём конфигурационный файл на мастер ноде
+```
+ssh -i ~/.ssh/id_ed25519 ubuntu@<master_ip>
+mkdir ~/.kube
+sudo cp /etc/kubernetes/admin.conf ~/.kube/config
+sudo chown -R ubuntu:ubuntu $HOME/.kube/config
+```
+Проверяем доступность подов и нод
+```
+kubectl get pods --all-namespaces
+kubectl get nodes
+```
+![kuber_working](./screens/kuber_working.png)
+
 ### Этап "Создание тестового приложения"
 
 ...
