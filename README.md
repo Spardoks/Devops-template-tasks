@@ -504,6 +504,8 @@ curl 127.0.0.1:80
 
 ### Этап "Подготовка cистемы мониторинга и деплой приложения"
 
+1. Мониторинг
+
 Скопируем с удалённого master хоста на локальную машину конфиг kuber (с подменой ip), чтобы управлять кластером удобнее с локальной машины и активируем конфиг
 ```
 export KUBECONFIG=~/education/devops_diplom/my_cluster_cuber_config
@@ -554,9 +556,35 @@ kubectl -n monitoring get svc -o wide
 ![web_grafana_working](./screens/web_grafana_working.png)
 
 
-Деплой приложения
+2. Деплой приложения
 
-...
+Создаём отдельный namespace, в котором буду развёртывать тестовое приложение
+```
+mkdir test-site
+kubectl create namespace ns-test-site
+```
+
+Создаём манифест Deployment с тестовым приложением
+[deployment](./test-site/deployment.yaml)
+
+Применяем манифест Deployment и проверяем результат
+```
+kubectl apply -f test-site/deployment.yaml -n ns-test-site
+kubectl get deployment -n ns-test-site
+```
+
+Создаём манифест сервиса с типом NodePort для доступа к web-интерфейсу тестового приложения
+[service](./test-site/service.yaml)
+
+Применяем манифест сервиса и проверяем результат
+```
+kubectl apply -f test-site/service.yaml -n ns-test-site
+kubectl get service -n ns-test-site
+```
+![deployment_service_ready](./screens/deployment_service_ready.png)
+
+![site_ready](./screens/site_ready.png)
+
 
 ### Этап "Деплой инфраструктуры в terraform pipeline"
 
