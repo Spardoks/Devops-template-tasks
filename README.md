@@ -592,7 +592,124 @@ kubectl get service -n ns-test-site
 
 ### Этап "Установка и настройка CI/CD"
 
-...
+Важно!!! Сделать статические адреса машинам в кластере кубера, иначе секрет с кубер конфигом быстро протухнет и вообще всё придётся перенастраивать (пришлось, да...)
+
+https://docs.github.com/en/actions/get-started/quickstart
+
+Флоу (предварительно не забываем создать секреты и переменные в настройках Github)
+```
+name: CI / CD
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+permissions: {}
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker image
+    runs-on: ubuntu-latest
+    outputs:
+      IMAGE_TAG: ${{ steps.set-tag.outputs.IMAGE_TAG }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set image tag
+        id: set-tag
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            # пример: refs/tags/v1.2.3 → v1.2.3
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG="latest"
+          fi
+          echo "IMAGE_TAG=${TAG}" >> $GITHUB_OUTPUT
+          echo ">>> IMAGE_TAG = ${TAG}"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ vars.IMAGE_NAME || 'spardoks/devops-template-tasks-site' }}:${{ steps.set-tag.outputs.IMAGE_TAG }}
+
+  deploy-k8s:
+    name: Deploy to Kubernetes
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ${{ vars.IMAGE_NAME || 'spardoks/devops-template-tasks-site' }}
+      IMAGE_TAG: ${{ needs.build-and-push.outputs.IMAGE_TAG }}
+      K8S_NAMESPACE: ${{ vars.K8S_NAMESPACE || 'ns-test-site' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Write kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Test kubectl connectivity
+        run: kubectl get ns
+
+      - name: Patch Deployment with new image
+        run: |
+          kubectl -n $K8S_NAMESPACE set image deployment/test-site \
+            test-site=${IMAGE_NAME}:${IMAGE_TAG} \
+            --record
+
+      - name: Ensure imagePullPolicy=Always
+        run: |
+          kubectl -n $K8S_NAMESPACE patch deployment test-site \
+            --type='json' -p='[{"op":"add","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"Always"}]'
+
+      - name: Wait for rollout to finish
+        run: |
+          kubectl -n $K8S_NAMESPACE rollout status deployment/test-site --timeout=180s
+```
+
+Пуш с тегом
+```
+git add .
+git commit
+git tag -a v0.2 -m "Version 0.2"
+git push origin main --tags
+```
+
+Сборка latest
+https://hub.docker.com/layers/spardoks/devops-template-tasks-site/latest/images/sha256-29e22265fe51daba51d566e4ac1f019ce8f250d70945be037ce2b88e298d68a8
+
+Сборка v0.2
+https://hub.docker.com/layers/spardoks/devops-template-tasks-site/v0.2/images/sha256-1767702129c9e78005d6545d9f8de5224208adc9dbe547a4f4991b28f7d6574b
+
+Описание флоу и его раны
+https://github.com/Spardoks/Devops-template-tasks-site/actions/workflows/ci-cd-main.yml
+
+Коммит с флоу и на котором были проведены сборки latest и v0.2
+https://github.com/Spardoks/Devops-template-tasks-site/commit/c53a24c2be486bee92e20bd6bc6a57821ce929d7
+
+![github_actions_working](./screens/github_actions_working.png)
 
 ## Итоги
 
