@@ -155,3 +155,12 @@ variable "worker_resources" {
     platform_id = "standard-v1"
   }
 }
+
+
+# Ansible
+
+variable "ansible_hosts_cfg_kubespray" {
+  type        = string
+  description = "Where to create hosts inventory for configure kubespray"
+  default     = "../../kubespray/inventory/mycluster/hosts.yaml"
+}
