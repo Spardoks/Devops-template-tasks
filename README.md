@@ -118,13 +118,13 @@ https://github.com/netology-code/devops-diplom-yandexcloud/blob/main/README.md
 
 ### Деплой инфраструктуры в terraform pipeline
 
-1. Если на первом этапе вы не воспользовались [Terraform Cloud](https://app.terraform.io/), то задеплойте и настройте в кластере [atlantis](https://www.runatlantis.io/) для отслеживания изменений инфраструктуры. Альтернативный вариант 3 задания: вместо Terraform Cloud или atlantis настройте на автоматический запуск и применение конфигурации terraform из вашего git-репозитория в выбранной вами CI-CD системе при любом комите в main ветку. Предоставьте скриншоты работы пайплайна из CI/CD системы.
+1. Если на первом этапе вы не воспользовались [Terraform Cloud](https://app.terraform.io/), то задеплойте и настройте в кластере [atlantis](https://www.runatlantis.io/) для отслеживания изменений инфраструктуры. Альтернативный вариант задания: вместо Terraform Cloud или atlantis настройте на автоматический запуск и применение конфигурации terraform из вашего git-репозитория в выбранной вами CI-CD системе при любом комите в main ветку. Предоставьте скриншоты работы пайплайна из CI/CD системы.
 
 Ожидаемый результат:
 1. Git репозиторий с конфигурационными файлами для настройки Kubernetes.
-2. Http доступ на 80 порту к web интерфейсу grafana.
+2. Http доступ на 3000 порту к web интерфейсу grafana.
 3. Дашборды в grafana отображающие состояние Kubernetes кластера.
-4. Http доступ на 80 порту к тестовому приложению.
+4. Http доступ на 3001 порту к тестовому приложению.
 5. Atlantis или terraform cloud или ci/cd-terraform
 ---
 ### Установка и настройка CI/CD
@@ -588,7 +588,91 @@ kubectl get service -n ns-test-site
 
 ### Этап "Деплой инфраструктуры в terraform pipeline"
 
-...
+Создаём секреты для корректной работы флоу (https://github.com/Spardoks/Devops-template-tasks/settings/secrets/actions)
+
+https://docs.github.com/en/actions/get-started/quickstart
+
+Описываем флоу ([ci-cd-terraform](./.github/workflows/ci-cd-terraform.yml))
+
+```
+name: 'Terraform CI/CD'
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform_infrastructure/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform_infrastructure/**'
+  workflow_dispatch:
+    inputs:
+      destroy:
+        description: 'Set to "true" to destroy infrastructure'
+        required: false
+        default: 'false'
+      apply:
+        description: 'Set to "true" to apply infrastructure changes'
+        required: false
+        default: 'false'
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+
+    env:
+      TOKEN: ${{ secrets.YC_TOKEN }}
+      CLOUD_ID: ${{ secrets.YC_CLOUD_ID }}
+      FOLDER_ID: ${{ secrets.YC_FOLDER_ID }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+      TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+      TF_VAR_ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+      TF_VAR_ansible_hosts_cfg_kubespray: './hosts.yaml'
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: "1.11.4"
+
+    - name: Terraform Init
+      run: terraform -chdir=./terraform init
+
+    - name: Terraform Format and Validate
+      run: terraform -chdir=./terraform_infrastructure validate
+
+    - name: Terraform Plan
+      run: |
+        terraform -chdir=./terraform_infrastructure plan -input=false -out=tfplan \
+        -var="token=${{ secrets.YC_TOKEN }}" \
+        -var="cloud_id=${{ secrets.YC_CLOUD_ID }}" \
+        -var="folder_id=${{ secrets.YC_FOLDER_ID }}" \
+        -var="ansible_hosts_cfg_kubespray=./hosapplyml"
+
+    - name: Terraform Apply (Automatic Trigger)
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: terraform -chdir=./terraform_infrastructure apply -input=false tfplan
+
+    - name: Terraform Apply (Manual Trigger)
+      if: github.event_name == 'workflow_dispatch' && github.event.inputs.apply == 'true'
+      run: terraform -chdir=./terraform_infrastructure apply -input=false tfplan
+
+    - name: Terraform Destroy (Manual Trigger)
+      if: github.event_name == 'workflow_dispatch' && github.event.inputs.destroy == 'true'
+      run: |
+        terraform -chdir=./terraform_infrastructure destroy -input=false -auto-approve \
+        -var="token=${{ secrets.YC_TOKEN }}" \
+        -var="cloud_id=${{ secrets.YC_CLOUD_ID }}" \
+        -var="folder_id=${{ secrets.YC_FOLDER_ID }}"
+```
 
 ### Этап "Установка и настройка CI/CD"
 
